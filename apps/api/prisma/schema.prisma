@@ -1,0 +1,171 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  EDITOR
+}
+
+enum TestStatus {
+  draft
+  published
+}
+
+enum Dimension {
+  EI
+  SN
+  TF
+  JP
+}
+
+enum Trait {
+  E
+  I
+  S
+  N
+  T
+  F
+  J
+  P
+}
+
+enum MbtiCode {
+  ISTJ
+  ISFJ
+  INFJ
+  INTJ
+  ISTP
+  ISFP
+  INFP
+  INTP
+  ESTP
+  ESFP
+  ENFP
+  ENTP
+  ESTJ
+  ESFJ
+  ENFJ
+  ENTJ
+}
+
+model Admin {
+  id           Int        @id @default(autoincrement())
+  email        String     @unique
+  passwordHash String
+  name         String
+  role         AdminRole
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+}
+
+model Test {
+  id           Int           @id @default(autoincrement())
+  title        String
+  slug         String        @unique
+  description  String
+  introText    String
+  thumbnailUrl String?
+  status       TestStatus
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  settings     TestSetting?
+  answerScales AnswerScale[]
+  questions    Question[]
+  mbtiResults  MbtiResult[]
+  attempts     TestAttempt[]
+}
+
+model TestSetting {
+  id           Int      @id @default(autoincrement())
+  testId       Int      @unique
+  tieEI        Trait
+  tieSN        Trait
+  tieTF        Trait
+  tieJP        Trait
+  shareEnabled Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model AnswerScale {
+  id          Int      @id @default(autoincrement())
+  testId      Int
+  value       Int
+  label       String
+  scoreWeight Int
+  sortOrder   Int
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, value])
+}
+
+model Question {
+  id            Int       @id @default(autoincrement())
+  testId        Int
+  questionText  String
+  dimension     Dimension
+  positiveTrait Trait
+  sortOrder     Int
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model MbtiResult {
+  id               Int      @id @default(autoincrement())
+  testId           Int
+  mbtiCode         MbtiCode
+  title            String
+  summary          String
+  description      String
+  strengthsJson    Json
+  cautionsJson     Json
+  shareTitle       String
+  shareDescription String
+  imageUrl         String?
+  updatedAt        DateTime @updatedAt
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, mbtiCode])
+}
+
+model TestAttempt {
+  id                 Int      @id @default(autoincrement())
+  testId             Int
+  answersJson        Json
+  scoresJson         Json
+  resultMbti         MbtiCode
+  resultSnapshotJson Json
+  shareToken         String   @unique
+  isShared           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  adminId    Int
+  action     String
+  targetType String
+  targetId   String
+  beforeJson Json?
+  afterJson  Json?
+  createdAt  DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+}

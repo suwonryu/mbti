@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mbti-postgres-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: mbti
+      POSTGRES_USER: mbti
+      POSTGRES_PASSWORD: mbti
+    ports:
+      - '5432:5432'
+    volumes:
+      - mbti_postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mbti -d mbti']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    container_name: mbti-api-local
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgresql://mbti:mbti@postgres:5432/mbti?schema=public
+      JWT_SECRET: local-dev-secret
+      RUN_SEED: 'true'
+    ports:
+      - '4001:4000'
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:4001/api
+    container_name: mbti-web-local
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      INTERNAL_API_BASE_URL: http://api:4000/api
+    ports:
+      - '3000:3000'
+
+volumes:
+  mbti_postgres_local_data:

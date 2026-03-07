@@ -1,0 +1,16 @@
+export type ApiSuccess<T> = {
+  success: true;
+  data: T;
+};
+
+export type ApiError = {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+  };
+};
+
+export function ok<T>(data: T): ApiSuccess<T> {
+  return { success: true, data };
+}
