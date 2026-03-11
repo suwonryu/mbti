@@ -36,6 +36,18 @@ const mbtiCodes: MbtiCode[] = [
   'ENTJ',
 ];
 
+const defaultStrengths = [
+  '상황을 빠르게 파악하고 핵심을 정리하는 능력이 좋습니다.',
+  '목표를 정하면 끝까지 실행하려는 추진력이 있습니다.',
+  '주변 사람과 협업할 때 역할을 명확히 나누고 조율합니다.',
+];
+
+const defaultCautions = [
+  '완벽하게 하려는 마음이 강해 스스로를 몰아붙일 수 있습니다.',
+  '의견 차이가 있을 때 상대의 속도보다 내 기준을 앞세울 수 있습니다.',
+  '집중하는 분야 외의 일은 우선순위에서 밀릴 수 있으니 균형이 필요합니다.',
+];
+
 async function main() {
   const defaultAdminPasswordHash = '$2b$10$nnBnA3NNfJGOZra2iDV/n.JmdiNOoxUovfTgZrJi1vTNt.mDAUFPy';
 
@@ -168,8 +180,8 @@ async function main() {
         title: `${code} 유형`,
         summary: `당신은 ${code} 성향의 특징을 보입니다.`,
         description: `${code} 유형은 상황을 해석하고 반응하는 고유한 선호 패턴을 가지고 있습니다.`,
-        strengthsJson: ['강점 1', '강점 2', '강점 3'],
-        cautionsJson: ['주의점 1', '주의점 2'],
+        strengthsJson: defaultStrengths,
+        cautionsJson: defaultCautions,
         shareTitle: `${code} 테스트 결과`,
         shareDescription: `${code} 유형으로 나왔어요.`,
       },
@@ -179,8 +191,8 @@ async function main() {
         title: `${code} 유형`,
         summary: `당신은 ${code} 성향의 특징을 보입니다.`,
         description: `${code} 유형은 상황을 해석하고 반응하는 고유한 선호 패턴을 가지고 있습니다.`,
-        strengthsJson: ['강점 1', '강점 2', '강점 3'],
-        cautionsJson: ['주의점 1', '주의점 2'],
+        strengthsJson: defaultStrengths,
+        cautionsJson: defaultCautions,
         shareTitle: `${code} 테스트 결과`,
         shareDescription: `${code} 유형으로 나왔어요.`,
       },
