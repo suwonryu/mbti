@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import { ResultClient } from './result-client';
 
 type ResultPageProps = {
@@ -23,6 +24,35 @@ type SharedResultPayload = {
 
 function getApiBaseUrl() {
   return process.env.INTERNAL_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4001/api';
+}
+
+async function getSiteOrigin() {
+  const envOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL;
+
+  if (envOrigin) {
+    return envOrigin;
+  }
+
+  const requestHeaders = await headers();
+  const forwardedHost = requestHeaders.get('x-forwarded-host');
+  const host = forwardedHost ?? requestHeaders.get('host');
+
+  if (!host) {
+    return 'http://localhost:3000';
+  }
+
+  const forwardedProto = requestHeaders.get('x-forwarded-proto');
+  const protocol = forwardedProto ?? (host.includes('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
+
+  return `${protocol}://${host}`;
+}
+
+function toAbsoluteUrl(url: string, origin: string) {
+  if (/^https?:\/\//i.test(url)) {
+    return url;
+  }
+
+  return new URL(url, origin).toString();
 }
 
 async function fetchSharedResult(shareToken: string) {
@@ -60,7 +90,8 @@ export async function generateMetadata({ params }: ResultPageProps): Promise<Met
 
   const title = snapshot.shareTitle || `${snapshot.mbtiCode} 결과`;
   const description = snapshot.shareDescription || snapshot.summary;
-  const imageUrl = snapshot.imageUrl ?? undefined;
+  const origin = await getSiteOrigin();
+  const imageUrl = toAbsoluteUrl(snapshot.imageUrl?.trim() || `/api/mbti-character/${snapshot.mbtiCode}`, origin);
 
   return {
     title,
@@ -69,13 +100,13 @@ export async function generateMetadata({ params }: ResultPageProps): Promise<Met
       title,
       description,
       type: 'article',
-      images: imageUrl ? [{ url: imageUrl }] : undefined,
+      images: [{ url: imageUrl }],
     },
     twitter: {
-      card: imageUrl ? 'summary_large_image' : 'summary',
+      card: 'summary_large_image',
       title,
       description,
-      images: imageUrl ? [imageUrl] : undefined,
+      images: [imageUrl],
     },
   };
 }
