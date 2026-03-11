@@ -58,9 +58,13 @@ export default function TestPage() {
   });
 
   const questions = questionsQuery.data?.questions ?? [];
+  const answerScale = testQuery.data?.answerScale ?? [];
+  const validAnswerValues = useMemo(() => new Set(answerScale.map((item) => item.value)), [answerScale]);
+  const questionIdSet = useMemo(() => new Set(questions.map((item) => item.id)), [questions]);
   const total = questions.length;
   const question = questions[currentIndex];
   const selectedAnswer = question ? answers[String(question.id)] : undefined;
+  const isSelectedAnswerValid = selectedAnswer !== undefined && validAnswerValues.has(selectedAnswer);
 
   useEffect(() => {
     if (!slug) {
@@ -89,6 +93,32 @@ export default function TestPage() {
     }
   }, [currentIndex, total, setCurrentIndex]);
 
+  useEffect(() => {
+    if (!slug || questions.length === 0 || answerScale.length === 0) {
+      return;
+    }
+
+    let hasInvalidAnswer = false;
+    const sanitizedAnswers: Record<string, number> = {};
+
+    for (const [questionId, answer] of Object.entries(answers)) {
+      const parsedId = Number(questionId);
+      const isValidQuestionId = Number.isInteger(parsedId) && questionIdSet.has(parsedId);
+      const isValidAnswer = validAnswerValues.has(answer);
+
+      if (!isValidQuestionId || !isValidAnswer) {
+        hasInvalidAnswer = true;
+        continue;
+      }
+
+      sanitizedAnswers[questionId] = answer;
+    }
+
+    if (hasInvalidAnswer) {
+      hydrate(sanitizedAnswers);
+    }
+  }, [slug, questions.length, answerScale.length, answers, questionIdSet, validAnswerValues, hydrate]);
+
   const progressCurrent = useMemo(() => {
     if (total === 0) {
       return 0;
@@ -104,7 +134,7 @@ export default function TestPage() {
   };
 
   const onNext = () => {
-    if (!question || !selectedAnswer) {
+    if (!question || !isSelectedAnswerValid) {
       return;
     }
 
@@ -113,10 +143,20 @@ export default function TestPage() {
       return;
     }
 
-    const submitAnswers = questions.map((item) => ({
-      questionId: item.id,
-      answer: answers[String(item.id)],
-    }));
+    const submitAnswers: Array<{ questionId: number; answer: number }> = [];
+
+    for (const [index, item] of questions.entries()) {
+      const answer = answers[String(item.id)];
+      if (answer === undefined || !validAnswerValues.has(answer)) {
+        setCurrentIndex(index);
+        return;
+      }
+
+      submitAnswers.push({
+        questionId: item.id,
+        answer,
+      });
+    }
 
     submitMutation.mutate({ answers: submitAnswers });
   };
@@ -143,8 +183,6 @@ export default function TestPage() {
       </main>
     );
   }
-
-  const answerScale = testQuery.data?.answerScale ?? [];
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
@@ -181,6 +219,9 @@ export default function TestPage() {
         {submitMutation.isError ? (
           <p className="text-sm text-red-600">{getErrorMessage(submitMutation.error, '제출에 실패했습니다.')}</p>
         ) : null}
+        {selectedAnswer !== undefined && !isSelectedAnswerValid ? (
+          <p className="text-sm text-red-600">선택지를 다시 골라주세요.</p>
+        ) : null}
 
         <div className="flex items-center justify-between gap-3">
           <button
@@ -193,7 +234,7 @@ export default function TestPage() {
           </button>
           <button
             className="mbti-button"
-            disabled={!selectedAnswer || submitMutation.isPending}
+            disabled={!isSelectedAnswerValid || submitMutation.isPending}
             onClick={onNext}
             type="button"
           >
