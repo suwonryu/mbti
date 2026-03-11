@@ -61,6 +61,7 @@ export function ResultClient({ shareToken }: ResultClientProps) {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const strengths = toStringArray(snapshot.strengths);
   const cautions = toStringArray(snapshot.cautions);
+  const resultImageUrl = snapshot.imageUrl?.trim() || `/api/mbti-character/${snapshot.mbtiCode}`;
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
@@ -70,13 +71,7 @@ export function ResultClient({ shareToken }: ResultClientProps) {
         <h2 className="text-2xl font-bold">{snapshot.title}</h2>
         <p className="text-slate-700">{snapshot.summary}</p>
 
-        {snapshot.imageUrl ? (
-          <img
-            alt={`${snapshot.mbtiCode} result`}
-            className="w-full rounded-2xl border border-orange-100 object-cover"
-            src={snapshot.imageUrl}
-          />
-        ) : null}
+        <img alt={`${snapshot.mbtiCode} result`} className="w-full rounded-2xl border border-orange-100 object-cover" src={resultImageUrl} />
 
         <section className="space-y-2">
           <h3 className="text-lg font-bold">설명</h3>
