@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { getCharacterResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
+import { getShareCardImagePath, normalizeResultImageUrl } from '@/lib/result-image';
+import { OG_IMAGE_SIZE } from '@/lib/og-images';
 import { fetchSharedResultSnapshot } from '@/lib/shared-result';
 import { ResultClient } from './result-client';
 
@@ -53,10 +54,7 @@ export async function generateMetadata({ params }: ResultPageProps): Promise<Met
   const title = snapshot.shareTitle || `${snapshot.mbtiCode} 결과`;
   const description = snapshot.shareDescription || snapshot.summary;
   const origin = await getSiteOrigin();
-  const imageUrl = toAbsoluteUrl(
-    normalizeResultImageUrl(snapshot.imageUrl) ?? getCharacterResultImagePath(snapshot.mbtiCode),
-    origin,
-  );
+  const imageUrl = toAbsoluteUrl(normalizeResultImageUrl(snapshot.imageUrl) ?? getShareCardImagePath(shareToken), origin);
 
   return {
     metadataBase: origin ? new URL(origin) : undefined,
@@ -66,7 +64,7 @@ export async function generateMetadata({ params }: ResultPageProps): Promise<Met
       title,
       description,
       type: 'article',
-      images: [{ url: imageUrl }],
+      images: [{ url: imageUrl, width: OG_IMAGE_SIZE.width, height: OG_IMAGE_SIZE.height }],
     },
     twitter: {
       card: 'summary_large_image',
