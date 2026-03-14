@@ -34,6 +34,14 @@ export function ResultClient({ shareToken }: ResultClientProps) {
     queryFn: () => getSharedResult(shareToken),
     enabled: Boolean(shareToken),
   });
+  const snapshot = resultQuery.data?.snapshot;
+  const fallbackImageUrl = getFallbackResultImagePath(shareToken);
+  const preferredImageUrl = normalizeResultImageUrl(snapshot?.imageUrl) ?? fallbackImageUrl;
+  const [imageSrc, setImageSrc] = useState(fallbackImageUrl);
+
+  useEffect(() => {
+    setImageSrc(preferredImageUrl);
+  }, [preferredImageUrl]);
 
   if (resultQuery.isLoading) {
     return (
@@ -45,7 +53,7 @@ export function ResultClient({ shareToken }: ResultClientProps) {
     );
   }
 
-  if (resultQuery.isError || !resultQuery.data) {
+  if (resultQuery.isError || !snapshot) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
         <section className="mbti-card w-full space-y-4 p-8 text-center">
@@ -59,17 +67,9 @@ export function ResultClient({ shareToken }: ResultClientProps) {
     );
   }
 
-  const { snapshot } = resultQuery.data;
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const strengths = toStringArray(snapshot.strengths);
   const cautions = toStringArray(snapshot.cautions);
-  const fallbackImageUrl = getFallbackResultImagePath(shareToken);
-  const preferredImageUrl = normalizeResultImageUrl(snapshot.imageUrl) ?? fallbackImageUrl;
-  const [imageSrc, setImageSrc] = useState(preferredImageUrl);
-
-  useEffect(() => {
-    setImageSrc(preferredImageUrl);
-  }, [preferredImageUrl]);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
