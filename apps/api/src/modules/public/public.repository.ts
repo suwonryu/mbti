@@ -89,6 +89,7 @@ export class PublicRepository {
         shareToken,
       },
       select: {
+        testId: true,
         shareToken: true,
         resultMbti: true,
         resultSnapshotJson: true,

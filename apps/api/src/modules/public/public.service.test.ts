@@ -118,4 +118,44 @@ describe('PublicService submit validation', () => {
     expect(result.resultMbti).toBe('ESTJ');
     expect(result.shareToken.length).toBeGreaterThan(10);
   });
+
+  it('hydrates missing strengths and cautions for legacy shared snapshots', async () => {
+    const repo = createRepositoryMock();
+    const service = new PublicService(repo as never);
+
+    repo.findSharedAttempt.mockResolvedValue({
+      testId: 1,
+      shareToken: 'token',
+      resultMbti: 'INFJ',
+      createdAt: new Date('2026-03-14T00:00:00.000Z'),
+      resultSnapshotJson: {
+        mbtiCode: 'INFJ',
+        title: 'INFJ 유형',
+        summary: '요약',
+        description: '설명',
+        strengths: [],
+        cautions: [],
+        shareTitle: '공유 제목',
+        shareDescription: '공유 설명',
+        imageUrl: null,
+        test: {
+          id: 1,
+          slug: 'basic-mbti',
+          title: '기본 MBTI 테스트',
+        },
+      },
+    });
+
+    repo.findMbtiResultByCode.mockResolvedValue({
+      strengthsJson: ['강점 1', '강점 2'],
+      cautionsJson: ['주의점 1', '주의점 2'],
+    });
+
+    const result = await service.getSharedResult('token');
+
+    expect(result.snapshot).toMatchObject({
+      strengths: ['강점 1', '강점 2'],
+      cautions: ['주의점 1', '주의점 2'],
+    });
+  });
 });

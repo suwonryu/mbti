@@ -179,10 +179,16 @@ export class PublicService {
       throw new ApiHttpException(HttpStatus.NOT_FOUND, 'INVALID_TOKEN', '유효하지 않은 결과 링크입니다.');
     }
 
+    const snapshot = await this.hydrateSharedSnapshot({
+      testId: attempt.testId,
+      resultMbti: attempt.resultMbti,
+      snapshot: attempt.resultSnapshotJson,
+    });
+
     return {
       shareToken: attempt.shareToken,
       createdAt: attempt.createdAt,
-      snapshot: attempt.resultSnapshotJson,
+      snapshot,
     };
   }
 
@@ -215,6 +221,48 @@ export class PublicService {
     }
 
     return fallback;
+  }
+
+  private async hydrateSharedSnapshot(params: {
+    testId: number;
+    resultMbti: MbtiCode;
+    snapshot: Prisma.JsonValue;
+  }) {
+    const snapshot = this.toSnapshotRecord(params.snapshot);
+    const hasStrengths = this.toStringArray(snapshot.strengths).length > 0;
+    const hasCautions = this.toStringArray(snapshot.cautions).length > 0;
+
+    if (hasStrengths && hasCautions) {
+      return params.snapshot;
+    }
+
+    const currentResult = await this.repository.findMbtiResultByCode(params.testId, params.resultMbti);
+
+    if (!currentResult) {
+      return params.snapshot;
+    }
+
+    return {
+      ...snapshot,
+      strengths: hasStrengths ? snapshot.strengths : currentResult.strengthsJson,
+      cautions: hasCautions ? snapshot.cautions : currentResult.cautionsJson,
+    } satisfies Record<string, Prisma.JsonValue>;
+  }
+
+  private toSnapshotRecord(value: Prisma.JsonValue) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      return {} as Record<string, Prisma.JsonValue>;
+    }
+
+    return value as Record<string, Prisma.JsonValue>;
+  }
+
+  private toStringArray(value: Prisma.JsonValue | undefined) {
+    if (!Array.isArray(value)) {
+      return [] as string[];
+    }
+
+    return value.filter((item): item is string => typeof item === 'string');
   }
 
   private validateAnswers(
