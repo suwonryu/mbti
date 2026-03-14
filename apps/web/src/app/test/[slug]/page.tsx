@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useParams, useRouter } from 'next/navigation';
 import { ProgressBar } from '@/components/progress-bar';
@@ -34,6 +34,7 @@ export default function TestPage() {
   const slug = getParamValue(params.slug);
   const router = useRouter();
   const { answers, currentIndex, setAnswer, setCurrentIndex, hydrate, clear } = useTestSessionStore();
+  const [isTransitioningToResult, setIsTransitioningToResult] = useState(false);
 
   const testQuery = useQuery({
     queryKey: ['public-test', slug],
@@ -50,10 +51,16 @@ export default function TestPage() {
   const submitMutation = useMutation({
     mutationFn: (payload: { answers: Array<{ questionId: number; answer: number }> }) =>
       submitPublicTest(slug, payload),
+    onMutate: () => {
+      setIsTransitioningToResult(true);
+    },
     onSuccess: (data) => {
       clearAnswers(slug);
       clear();
       router.push(`/result/${data.shareToken}`);
+    },
+    onError: () => {
+      setIsTransitioningToResult(false);
     },
   });
 
@@ -179,6 +186,26 @@ export default function TestPage() {
           <p className="text-slate-600">
             {getErrorMessage(testQuery.error ?? questionsQuery.error, '잠시 후 다시 시도해 주세요.')}
           </p>
+        </section>
+      </main>
+    );
+  }
+
+  if (isTransitioningToResult) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
+        <section className="mbti-card w-full space-y-6 p-8 text-center">
+          <div className="space-y-3">
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-accent">Analyzing</p>
+            <h1 className="text-3xl font-black">결과 확인 중...</h1>
+            <p className="text-slate-600">답변을 바탕으로 당신의 MBTI 유형을 정리하고 있어요.</p>
+          </div>
+
+          <div className="mbti-loading-dots" aria-hidden="true">
+            <span className="mbti-loading-dot" />
+            <span className="mbti-loading-dot" />
+            <span className="mbti-loading-dot" />
+          </div>
         </section>
       </main>
     );
