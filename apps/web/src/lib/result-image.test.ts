@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getFallbackResultImagePath, normalizeResultImageUrl } from './result-image';
+import { getCharacterResultImagePath, getShareCardImagePath, normalizeResultImageUrl } from './result-image';
 
 describe('result image helpers', () => {
   it('keeps absolute and root-relative image urls', () => {
@@ -13,7 +13,8 @@ describe('result image helpers', () => {
     expect(normalizeResultImageUrl('INTJ')).toBeNull();
   });
 
-  it('builds fallback card image paths from share tokens', () => {
-    expect(getFallbackResultImagePath('abc123')).toBe('/result/abc123/card-image');
+  it('builds generated image paths', () => {
+    expect(getCharacterResultImagePath('INTJ')).toBe('/api/mbti-character/INTJ');
+    expect(getShareCardImagePath('abc123')).toBe('/result/abc123/card-image');
   });
 });

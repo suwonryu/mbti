@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { getFallbackResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
+import { getCharacterResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
 import { fetchSharedResultSnapshot } from '@/lib/shared-result';
 import { ResultClient } from './result-client';
 
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: ResultPageProps): Promise<Met
   const description = snapshot.shareDescription || snapshot.summary;
   const origin = await getSiteOrigin();
   const imageUrl = toAbsoluteUrl(
-    normalizeResultImageUrl(snapshot.imageUrl) ?? getFallbackResultImagePath(shareToken),
+    normalizeResultImageUrl(snapshot.imageUrl) ?? getCharacterResultImagePath(snapshot.mbtiCode),
     origin,
   );
 

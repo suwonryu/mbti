@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ShareButton } from '@/components/share-button';
 import { ApiClientError } from '@/lib/api/client';
 import { getSharedResult } from '@/lib/api/public';
-import { getFallbackResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
+import { getCharacterResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
 
 type ResultClientProps = {
   shareToken: string;
@@ -35,7 +35,7 @@ export function ResultClient({ shareToken }: ResultClientProps) {
     enabled: Boolean(shareToken),
   });
   const snapshot = resultQuery.data?.snapshot;
-  const fallbackImageUrl = getFallbackResultImagePath(shareToken);
+  const fallbackImageUrl = snapshot ? getCharacterResultImagePath(snapshot.mbtiCode) : '';
   const preferredImageUrl = normalizeResultImageUrl(snapshot?.imageUrl) ?? fallbackImageUrl;
   const [imageSrc, setImageSrc] = useState(fallbackImageUrl);
 

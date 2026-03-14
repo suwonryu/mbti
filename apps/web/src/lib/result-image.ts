@@ -31,6 +31,10 @@ export function normalizeResultImageUrl(value: string | null | undefined) {
   return null;
 }
 
-export function getFallbackResultImagePath(shareToken: string) {
+export function getCharacterResultImagePath(mbtiCode: string) {
+  return `/api/mbti-character/${mbtiCode}`;
+}
+
+export function getShareCardImagePath(shareToken: string) {
   return `/result/${shareToken}/card-image`;
 }
