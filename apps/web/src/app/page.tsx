@@ -11,9 +11,6 @@ export default function LandingPage() {
           <Link className="mbti-button" href="/intro">
             테스트 시작
           </Link>
-          <Link className="rounded-full border border-orange-200 px-5 py-3 font-semibold text-slate-700" href="/admin/login">
-            관리자
-          </Link>
         </div>
       </section>
     </main>
