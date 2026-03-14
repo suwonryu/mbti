@@ -158,4 +158,44 @@ describe('PublicService submit validation', () => {
       cautions: ['주의점 1', '주의점 2'],
     });
   });
+
+  it('replaces placeholder strengths and cautions for legacy shared snapshots', async () => {
+    const repo = createRepositoryMock();
+    const service = new PublicService(repo as never);
+
+    repo.findSharedAttempt.mockResolvedValue({
+      testId: 1,
+      shareToken: 'token',
+      resultMbti: 'INTJ',
+      createdAt: new Date('2026-03-14T00:00:00.000Z'),
+      resultSnapshotJson: {
+        mbtiCode: 'INTJ',
+        title: 'INTJ 유형',
+        summary: '요약',
+        description: '설명',
+        strengths: ['강점 1', '강점 2', '강점 3'],
+        cautions: ['주의점 1', '주의점 2'],
+        shareTitle: '공유 제목',
+        shareDescription: '공유 설명',
+        imageUrl: null,
+        test: {
+          id: 1,
+          slug: 'basic-mbti',
+          title: '기본 MBTI 테스트',
+        },
+      },
+    });
+
+    repo.findMbtiResultByCode.mockResolvedValue({
+      strengthsJson: ['구조를 설계합니다.', '효율을 높입니다.'],
+      cautionsJson: ['기준이 높습니다.', '표현이 단호할 수 있습니다.'],
+    });
+
+    const result = await service.getSharedResult('token');
+
+    expect(result.snapshot).toMatchObject({
+      strengths: ['구조를 설계합니다.', '효율을 높입니다.'],
+      cautions: ['기준이 높습니다.', '표현이 단호할 수 있습니다.'],
+    });
+  });
 });

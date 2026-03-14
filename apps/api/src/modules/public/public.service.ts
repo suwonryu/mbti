@@ -33,6 +33,19 @@ const VALID_MBTI_CODES = new Set<string>([
   'ENTJ',
 ]);
 
+const LEGACY_PLACEHOLDER_STRENGTHS = ['강점 1', '강점 2', '강점 3'];
+const LEGACY_PLACEHOLDER_CAUTIONS = ['주의점 1', '주의점 2'];
+const LEGACY_GENERIC_STRENGTHS = [
+  '상황을 빠르게 파악하고 핵심을 정리하는 능력이 좋습니다.',
+  '목표를 정하면 끝까지 실행하려는 추진력이 있습니다.',
+  '주변 사람과 협업할 때 역할을 명확히 나누고 조율합니다.',
+];
+const LEGACY_GENERIC_CAUTIONS = [
+  '완벽하게 하려는 마음이 강해 스스로를 몰아붙일 수 있습니다.',
+  '의견 차이가 있을 때 상대의 속도보다 내 기준을 앞세울 수 있습니다.',
+  '집중하는 분야 외의 일은 우선순위에서 밀릴 수 있으니 균형이 필요합니다.',
+];
+
 type SnapshotPayload = {
   mbtiCode: string;
   title: string;
@@ -229,10 +242,14 @@ export class PublicService {
     snapshot: Prisma.JsonValue;
   }) {
     const snapshot = this.toSnapshotRecord(params.snapshot);
-    const hasStrengths = this.toStringArray(snapshot.strengths).length > 0;
-    const hasCautions = this.toStringArray(snapshot.cautions).length > 0;
+    const strengths = this.toStringArray(snapshot.strengths);
+    const cautions = this.toStringArray(snapshot.cautions);
+    const hasStrengths = strengths.length > 0;
+    const hasCautions = cautions.length > 0;
+    const shouldRefreshStrengths = !hasStrengths || this.isLegacyResultCopy(strengths, LEGACY_PLACEHOLDER_STRENGTHS, LEGACY_GENERIC_STRENGTHS);
+    const shouldRefreshCautions = !hasCautions || this.isLegacyResultCopy(cautions, LEGACY_PLACEHOLDER_CAUTIONS, LEGACY_GENERIC_CAUTIONS);
 
-    if (hasStrengths && hasCautions) {
+    if (!shouldRefreshStrengths && !shouldRefreshCautions) {
       return params.snapshot;
     }
 
@@ -244,8 +261,8 @@ export class PublicService {
 
     return {
       ...snapshot,
-      strengths: hasStrengths ? snapshot.strengths : currentResult.strengthsJson,
-      cautions: hasCautions ? snapshot.cautions : currentResult.cautionsJson,
+      strengths: shouldRefreshStrengths ? currentResult.strengthsJson : snapshot.strengths,
+      cautions: shouldRefreshCautions ? currentResult.cautionsJson : snapshot.cautions,
     } satisfies Record<string, Prisma.JsonValue>;
   }
 
@@ -263,6 +280,13 @@ export class PublicService {
     }
 
     return value.filter((item): item is string => typeof item === 'string');
+  }
+
+  private isLegacyResultCopy(value: string[], ...legacyCandidates: string[][]) {
+    return legacyCandidates.some(
+      (candidate) =>
+        candidate.length === value.length && candidate.every((item, index) => item === value[index]),
+    );
   }
 
   private validateAnswers(

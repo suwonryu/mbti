@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { mbtiResultContent } from '@mbti/shared/constants/mbti-result-content';
 import { AdminAuthGate } from '@/components/admin/admin-auth-gate';
 import {
   createAdminQuestion,
@@ -143,17 +144,17 @@ function toResultDraft(result: AdminResult): ResultDraft {
 }
 
 function createDefaultResultDraft(code: MbtiCode): ResultDraft {
+  const content = mbtiResultContent[code];
+
   return {
     mbtiCode: code,
-    title: `${code} 유형`,
-    summary: `${code} 성향 요약`,
-    description: `${code} 유형 설명`,
-    strengthsText:
-      '상황을 빠르게 파악하고 핵심을 정리하는 능력이 좋습니다.\n목표를 정하면 끝까지 실행하려는 추진력이 있습니다.\n주변 사람과 협업할 때 역할을 명확히 나누고 조율합니다.',
-    cautionsText:
-      '완벽하게 하려는 마음이 강해 스스로를 몰아붙일 수 있습니다.\n의견 차이가 있을 때 상대의 속도보다 내 기준을 앞세울 수 있습니다.\n집중하는 분야 외의 일은 우선순위에서 밀릴 수 있으니 균형이 필요합니다.',
-    shareTitle: `${code} 테스트 결과`,
-    shareDescription: `${code} 유형으로 나왔어요.`,
+    title: content.title,
+    summary: content.summary,
+    description: content.description,
+    strengthsText: content.strengths.join('\n'),
+    cautionsText: content.cautions.join('\n'),
+    shareTitle: content.shareTitle,
+    shareDescription: content.shareDescription,
     imageUrl: '',
   };
 }
