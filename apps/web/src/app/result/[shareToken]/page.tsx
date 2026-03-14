@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
+import { getFallbackResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
+import { fetchSharedResultSnapshot } from '@/lib/shared-result';
 import { ResultClient } from './result-client';
 
 type ResultPageProps = {
@@ -7,24 +9,6 @@ type ResultPageProps = {
     shareToken: string;
   }>;
 };
-
-type SharedResultPayload = {
-  success: boolean;
-  data?: {
-    snapshot: {
-      mbtiCode: string;
-      title: string;
-      summary: string;
-      shareTitle: string;
-      shareDescription: string;
-      imageUrl: string | null;
-    };
-  };
-};
-
-function getApiBaseUrl() {
-  return process.env.INTERNAL_API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:4001/api';
-}
 
 async function getSiteOrigin() {
   const envOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? process.env.SITE_URL;
@@ -55,31 +39,9 @@ function toAbsoluteUrl(url: string, origin: string) {
   return new URL(url, origin).toString();
 }
 
-async function fetchSharedResult(shareToken: string) {
-  try {
-    const response = await fetch(`${getApiBaseUrl()}/public/results/${shareToken}`, {
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const payload = (await response.json()) as SharedResultPayload;
-
-    if (!payload.success || !payload.data) {
-      return null;
-    }
-
-    return payload.data.snapshot;
-  } catch {
-    return null;
-  }
-}
-
 export async function generateMetadata({ params }: ResultPageProps): Promise<Metadata> {
   const { shareToken } = await params;
-  const snapshot = await fetchSharedResult(shareToken);
+  const snapshot = await fetchSharedResultSnapshot(shareToken);
 
   if (!snapshot) {
     return {
@@ -91,9 +53,13 @@ export async function generateMetadata({ params }: ResultPageProps): Promise<Met
   const title = snapshot.shareTitle || `${snapshot.mbtiCode} 결과`;
   const description = snapshot.shareDescription || snapshot.summary;
   const origin = await getSiteOrigin();
-  const imageUrl = toAbsoluteUrl(snapshot.imageUrl?.trim() || `/api/mbti-character/${snapshot.mbtiCode}`, origin);
+  const imageUrl = toAbsoluteUrl(
+    normalizeResultImageUrl(snapshot.imageUrl) ?? getFallbackResultImagePath(shareToken),
+    origin,
+  );
 
   return {
+    metadataBase: origin ? new URL(origin) : undefined,
     title,
     description,
     openGraph: {

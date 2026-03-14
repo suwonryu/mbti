@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { ShareButton } from '@/components/share-button';
 import { ApiClientError } from '@/lib/api/client';
 import { getSharedResult } from '@/lib/api/public';
+import { getFallbackResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
 
 type ResultClientProps = {
   shareToken: string;
@@ -61,7 +63,13 @@ export function ResultClient({ shareToken }: ResultClientProps) {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const strengths = toStringArray(snapshot.strengths);
   const cautions = toStringArray(snapshot.cautions);
-  const resultImageUrl = snapshot.imageUrl?.trim() || `/api/mbti-character/${snapshot.mbtiCode}`;
+  const fallbackImageUrl = getFallbackResultImagePath(shareToken);
+  const preferredImageUrl = normalizeResultImageUrl(snapshot.imageUrl) ?? fallbackImageUrl;
+  const [imageSrc, setImageSrc] = useState(preferredImageUrl);
+
+  useEffect(() => {
+    setImageSrc(preferredImageUrl);
+  }, [preferredImageUrl]);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
@@ -71,7 +79,16 @@ export function ResultClient({ shareToken }: ResultClientProps) {
         <h2 className="text-2xl font-bold">{snapshot.title}</h2>
         <p className="text-slate-700">{snapshot.summary}</p>
 
-        <img alt={`${snapshot.mbtiCode} result`} className="w-full rounded-2xl border border-orange-100 object-cover" src={resultImageUrl} />
+        <img
+          alt={`${snapshot.mbtiCode} result`}
+          className="w-full rounded-2xl border border-orange-100 object-cover"
+          onError={() => {
+            if (imageSrc !== fallbackImageUrl) {
+              setImageSrc(fallbackImageUrl);
+            }
+          }}
+          src={imageSrc}
+        />
 
         <section className="space-y-2">
           <h3 className="text-lg font-bold">설명</h3>

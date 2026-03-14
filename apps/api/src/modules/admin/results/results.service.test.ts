@@ -69,4 +69,63 @@ describe('AdminResultsService', () => {
       deleted: true,
     });
   });
+
+  it('rejects invalid image urls on create', async () => {
+    const repository = createRepositoryMock();
+    const service = new AdminResultsService(repository as never);
+
+    repository.findTestById.mockResolvedValue({ id: 1 });
+    repository.findResultByCode.mockResolvedValue(null);
+
+    await expect(
+      service.createResult(1, {
+        mbtiCode: 'INTJ',
+        title: 'INTJ 유형',
+        summary: '요약',
+        description: '설명',
+        strengths: ['강점 1'],
+        cautions: ['주의점 1'],
+        shareTitle: '공유 제목',
+        shareDescription: '공유 설명',
+        imageUrl: 'INTJ',
+      }),
+    ).rejects.toMatchObject({
+      response: {
+        code: 'INVALID_IMAGE_URL',
+      },
+    });
+  });
+
+  it('accepts root-relative image urls on create', async () => {
+    const repository = createRepositoryMock();
+    const service = new AdminResultsService(repository as never);
+
+    repository.findTestById.mockResolvedValue({ id: 1 });
+    repository.findResultByCode.mockResolvedValue(null);
+    repository.createResult.mockResolvedValue({
+      id: 99,
+      testId: 1,
+      mbtiCode: 'INTJ',
+      title: 'INTJ 유형',
+      imageUrl: '/images/intj.png',
+    });
+
+    await service.createResult(1, {
+      mbtiCode: 'INTJ',
+      title: 'INTJ 유형',
+      summary: '요약',
+      description: '설명',
+      strengths: ['강점 1'],
+      cautions: ['주의점 1'],
+      shareTitle: '공유 제목',
+      shareDescription: '공유 설명',
+      imageUrl: '/images/intj.png',
+    });
+
+    expect(repository.createResult).toHaveBeenCalledWith(
+      expect.objectContaining({
+        imageUrl: '/images/intj.png',
+      }),
+    );
+  });
 });

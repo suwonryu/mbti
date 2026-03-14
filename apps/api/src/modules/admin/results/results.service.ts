@@ -37,7 +37,7 @@ export class AdminResultsService {
       description: body.description?.trim(),
       shareTitle: body.shareTitle?.trim(),
       shareDescription: body.shareDescription?.trim(),
-      imageUrl: body.imageUrl === undefined ? undefined : body.imageUrl,
+      imageUrl: this.normalizeImageUrl(body.imageUrl),
     };
 
     if (body.strengths) {
@@ -103,7 +103,7 @@ export class AdminResultsService {
       cautionsJson: cautions,
       shareTitle,
       shareDescription,
-      imageUrl: body.imageUrl === undefined || body.imageUrl === null ? null : body.imageUrl.trim() || null,
+      imageUrl: this.normalizeImageUrl(body.imageUrl) ?? null,
     });
   }
 
@@ -121,5 +121,31 @@ export class AdminResultsService {
       testId: deleted.testId,
       deleted: true,
     };
+  }
+
+  private normalizeImageUrl(imageUrl: string | null | undefined) {
+    if (imageUrl === undefined) {
+      return undefined;
+    }
+
+    if (imageUrl === null) {
+      return null;
+    }
+
+    const trimmed = imageUrl.trim();
+
+    if (!trimmed) {
+      return null;
+    }
+
+    if (trimmed.startsWith('/') || /^https?:\/\//i.test(trimmed)) {
+      return trimmed;
+    }
+
+    throw new ApiHttpException(
+      HttpStatus.BAD_REQUEST,
+      'INVALID_IMAGE_URL',
+      '이미지 URL은 https:// 또는 / 로 시작해야 합니다.',
+    );
   }
 }
