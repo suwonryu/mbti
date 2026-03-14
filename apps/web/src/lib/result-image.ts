@@ -32,7 +32,7 @@ export function normalizeResultImageUrl(value: string | null | undefined) {
 }
 
 export function getCharacterResultImagePath(mbtiCode: string) {
-  return `/api/mbti-character/${mbtiCode}`;
+  return `/mbti-character/${mbtiCode}`;
 }
 
 export function getShareCardImagePath(shareToken: string) {

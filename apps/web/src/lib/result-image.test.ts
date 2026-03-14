@@ -14,7 +14,7 @@ describe('result image helpers', () => {
   });
 
   it('builds generated image paths', () => {
-    expect(getCharacterResultImagePath('INTJ')).toBe('/api/mbti-character/INTJ');
+    expect(getCharacterResultImagePath('INTJ')).toBe('/mbti-character/INTJ');
     expect(getShareCardImagePath('abc123')).toBe('/result/abc123/card-image');
   });
 });
