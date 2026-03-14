@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 type ShareButtonProps = {
   title: string;
   text: string;
   url: string;
+  actionSlot?: ReactNode;
 };
 
-export function ShareButton({ title, text, url }: ShareButtonProps) {
+export function ShareButton({ title, text, url, actionSlot }: ShareButtonProps) {
   const [message, setMessage] = useState('');
 
   const onShare = async () => {
@@ -28,9 +29,12 @@ export function ShareButton({ title, text, url }: ShareButtonProps) {
 
   return (
     <div className="space-y-2">
-      <button className="mbti-button" onClick={onShare} type="button">
-        결과 공유하기
-      </button>
+      <div className="flex flex-wrap gap-3">
+        <button className="mbti-button" onClick={onShare} type="button">
+          결과 공유하기
+        </button>
+        {actionSlot}
+      </div>
       {message ? <p className="text-sm text-slate-600">{message}</p> : null}
     </div>
   );

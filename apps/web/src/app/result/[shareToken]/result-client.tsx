@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { ShareButton } from '@/components/share-button';
 import { ApiClientError } from '@/lib/api/client';
 import { getSharedResult } from '@/lib/api/public';
 import { getCharacterResultImagePath, normalizeResultImageUrl } from '@/lib/result-image';
+import { clearAnswers } from '@/lib/test-storage';
+import { useTestSessionStore } from '@/lib/use-test-session-store';
 
 type ResultClientProps = {
   shareToken: string;
@@ -29,6 +32,8 @@ function toStringArray(value: unknown) {
 }
 
 export function ResultClient({ shareToken }: ResultClientProps) {
+  const router = useRouter();
+  const clearSession = useTestSessionStore((state) => state.clear);
   const resultQuery = useQuery({
     queryKey: ['shared-result', shareToken],
     queryFn: () => getSharedResult(shareToken),
@@ -70,6 +75,16 @@ export function ResultClient({ shareToken }: ResultClientProps) {
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
   const strengths = toStringArray(snapshot.strengths);
   const cautions = toStringArray(snapshot.cautions);
+  const restartHref = snapshot.test.slug ? `/test/${snapshot.test.slug}` : '/intro';
+
+  const onRestart = () => {
+    if (snapshot.test.slug) {
+      clearAnswers(snapshot.test.slug);
+    }
+
+    clearSession();
+    router.push(restartHref);
+  };
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center px-6 py-12">
@@ -117,7 +132,20 @@ export function ResultClient({ shareToken }: ResultClientProps) {
           </section>
         ) : null}
 
-        <ShareButton title={snapshot.shareTitle} text={snapshot.shareDescription} url={currentUrl} />
+        <ShareButton
+          actionSlot={
+            <button
+              className="rounded-full border border-orange-200 px-5 py-3 font-semibold text-slate-700"
+              onClick={onRestart}
+              type="button"
+            >
+              다시하기
+            </button>
+          }
+          title={snapshot.shareTitle}
+          text={snapshot.shareDescription}
+          url={currentUrl}
+        />
 
         <p className="rounded-xl bg-orange-50 p-4 text-sm text-slate-600">
           이 결과는 재미를 위한 간이 테스트이며 정식 MBTI 검사가 아닙니다.
