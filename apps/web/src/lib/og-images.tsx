@@ -132,11 +132,7 @@ export function renderCharacterImage(code: MbtiCode): ReactElement {
             <div style={{ color: palette.accent, fontSize: 26, fontWeight: 700, letterSpacing: 4 }}>YOUR TYPE</div>
             <div style={{ marginTop: 28, fontSize: 94, fontWeight: 800, lineHeight: 0.95 }}>{code}</div>
             <div style={{ marginTop: 18, fontSize: 38, fontWeight: 700 }}>{MBTI_LABELS[code]}</div>
-            <div style={{ marginTop: 12, fontSize: 26, color: '#475569' }}>
-              {traitBadges.join(' / ')}
-              {' '}
-              preferences
-            </div>
+            <div style={{ marginTop: 12, fontSize: 26, color: '#475569' }}>{`${traitBadges.join(' / ')} preferences`}</div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
             <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
